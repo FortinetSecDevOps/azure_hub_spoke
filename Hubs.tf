@@ -738,10 +738,6 @@ resource "azurerm_virtual_machine" "fgt11" {
 
   zones = [1]
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://westeuropefgtbootdiag.blob.core.windows.net/"
-  } 
 
   tags = {
     Project = "${var.project}"
@@ -804,10 +800,6 @@ resource "azurerm_virtual_machine" "fgt12" {
 
   zones = [2]
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://westeuropefgtbootdiag.blob.core.windows.net/"
-  }  
 
   tags = {
     Project = "${var.project}"
@@ -926,11 +918,6 @@ resource "azurerm_virtual_machine" "fgt21" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://eastusfgtbootdiag.blob.core.windows.net/"
-  }
-
   zones = [1]
     
 
@@ -999,11 +986,6 @@ resource "azurerm_virtual_machine" "fgt22" {
     tags = {
     Project = "${var.project}"
     Role = "FTNT"
-  }
-
- boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://eastusfgtbootdiag.blob.core.windows.net/"
   }
 
 }
@@ -1118,10 +1100,7 @@ resource "azurerm_virtual_machine" "fgt31" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://southeastasiafgtbootdiag.blob.core.windows.net/"
-  }
+
 
   zones = [1]
     
@@ -1193,10 +1172,7 @@ resource "azurerm_virtual_machine" "fgt32" {
     Role = "FTNT"
   }
 
- boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://southeastasiafgtbootdiag.blob.core.windows.net/"
-  }
+
 
 } 
 

@@ -248,11 +248,6 @@ resource "azurerm_virtual_machine" "fgtbranch11" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://westeuropefgtbootdiag.blob.core.windows.net/"
-  } 
-
   tags = {
     Project = "${var.project}"
     Role = "FTNT"
@@ -335,10 +330,6 @@ resource "azurerm_virtual_machine" "fgtbranch12" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://northeuropefgtbootdiag.blob.core.windows.net/"
-  } 
 
   tags = {
     Project = "${var.project}"
@@ -423,10 +414,6 @@ resource "azurerm_virtual_machine" "fgtbranch21" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://eastusfgtbootdiag.blob.core.windows.net/"
-  } 
 
   tags = {
     Project = "${var.project}"
@@ -509,11 +496,6 @@ resource "azurerm_virtual_machine" "fgtbranch22" {
   os_profile_linux_config {
     disable_password_authentication = false
   }
-
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://westusfgtbootdiag.blob.core.windows.net/"
-  } 
 
   tags = {
     Project = "${var.project}"
@@ -598,10 +580,6 @@ resource "azurerm_virtual_machine" "fgtbranch31" {
     disable_password_authentication = false
   }
 
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = "https://southeastasiafgtbootdiag.blob.core.windows.net/"
-  }
 
   tags = {
     Project = "${var.project}"
