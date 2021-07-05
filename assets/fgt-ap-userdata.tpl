@@ -14,8 +14,8 @@ end
 end
 
 config system global
-set admin-sport 34443
-set admin-ssh-port 3422
+set admin-sport 443
+set admin-ssh-port 22
 set hostname ${fgt_id}
 set admintimeout 120
 set timezone 57

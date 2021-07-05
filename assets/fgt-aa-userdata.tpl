@@ -82,7 +82,7 @@ end
 %{ if fgt_config_ha }
 config system ha
     set group-name AzureHA
-    set mode a-p
+    set mode a-a
     set hbdev port3 100
     set session-pickup enable
     set session-pickup-connectionless enable

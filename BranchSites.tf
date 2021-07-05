@@ -1,209 +1,201 @@
 //############################ Create Resource Group ##################
-
-resource "azurerm_resource_group" "COATSBranchesRG" {
-  name     = "mremini-${var.project}-${var.TAG}-Branches"
+resource "azurerm_resource_group" "branchrg" {
+  name     = "sallam-${var.project}-${var.TAG}-Branches"
   location = "westeurope"
 }
 
 //############################ Create Branch Sites VNETs  ##################
 
 resource "azurerm_virtual_network" "branches" {
-  count = length(var.branchesloc)
-  name                = "${var.project}-${var.TAG}-Spoke-${var.branchesloc[count.index]}"
-  location            =  var.branchesloc[count.index]
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  address_space       = [ var.branchescidr[count.index] ]
-  
+  count               = length(var.branchesloc)
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[count.index]}"
+  location            = var.branchesloc[count.index]
+  resource_group_name = azurerm_resource_group.branchrg.name
+  address_space       = [var.branchescidr[count.index]]
+
   tags = {
     Project = "${var.project}"
-    Role = "BranchSite"
+    Role    = "BranchSite"
   }
 }
-
 
 //############################ Create Branch Site Subnets ##################
 ////////////Branch11
 
 resource "azurerm_subnet" "Branch11SUbnets" {
-  count = length(var.branch11subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-subnet-${count.index+1}"
-  resource_group_name =  azurerm_resource_group.COATSBranchesRG.name
-  virtual_network_name = element(azurerm_virtual_network.branches.*.name , 0)
-  address_prefixes     = [ var.branch11subnetscidrs[count.index]]
-}
-////////////Branch12
+  count                = length(var.branch11subnetscidrs)
+  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-subnet-${count.index + 1}"
+  resource_group_name  = azurerm_resource_group.branchrg.name
+  virtual_network_name = element(azurerm_virtual_network.branches.*.name, 0)
+  address_prefixes     = [var.branch11subnetscidrs[count.index]]
 
-resource "azurerm_subnet" "Branch12SUbnets" {
-  count = length(var.branch12subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-subnet-${count.index+1}"
-  resource_group_name =  azurerm_resource_group.COATSBranchesRG.name
-  virtual_network_name = element(azurerm_virtual_network.branches.*.name , 1)
-  address_prefixes     = [ var.branch12subnetscidrs[count.index]]
 }
-
 ////////////Branch21
 
 resource "azurerm_subnet" "Branch21SUbnets" {
-  count = length(var.branch21subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[2]}-subnet-${count.index+1}"
-  resource_group_name =  azurerm_resource_group.COATSBranchesRG.name
-  virtual_network_name = element(azurerm_virtual_network.branches.*.name , 2)
-  address_prefixes     = [ var.branch21subnetscidrs[count.index]]
+  count                = length(var.branch21subnetscidrs)
+  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-subnet-${count.index + 1}"
+  resource_group_name  = azurerm_resource_group.branchrg.name
+  virtual_network_name = element(azurerm_virtual_network.branches.*.name, 1)
+  address_prefixes     = [var.branch21subnetscidrs[count.index]]
+
 }
 
-////////////Branch22
-
-resource "azurerm_subnet" "Branch22SUbnets" {
-  count = length(var.branch22subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[4]}-subnet-${count.index+1}"
-  resource_group_name =  azurerm_resource_group.COATSBranchesRG.name
-  virtual_network_name = element(azurerm_virtual_network.branches.*.name , 4)
-  address_prefixes     = [ var.branch22subnetscidrs[count.index]]
-}
-////////////Branch31
-
-resource "azurerm_subnet" "Branch31SUbnets" {
-  count = length(var.branch31subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Branch-${var.branchesloc[3]}-subnet-${count.index+1}"
-  resource_group_name =  azurerm_resource_group.COATSBranchesRG.name
-  virtual_network_name = element(azurerm_virtual_network.branches.*.name , 3)
-  address_prefixes     = [ var.branch31subnetscidrs[count.index]]
-}
-
-
-//############################ Create Branch Sites FGT ##################
+//############################ Create NICs ##################
+/////////////////////Branch 11 NIC
 
 resource "azurerm_network_interface" "fgtbranch11nics" {
-  count = length(var.fgtbranch11ip)
-  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgtbranch11-port${count.index+1}"
-  location                      = element(azurerm_virtual_network.branches.*.location , 0)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  enable_ip_forwarding           = true
-  enable_accelerated_networking   = true
+  count                         = length(var.fgtbranch11ip)
+  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgtbranch11-port${count.index + 1}"
+  location                      = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name           = azurerm_resource_group.branchrg.name
+  enable_ip_forwarding          = true
+  enable_accelerated_networking = true
 
   ip_configuration {
-    name                                    = "ipconfig1"
-    subnet_id                               = element(azurerm_subnet.Branch11SUbnets.*.id , count.index)
-    private_ip_address_allocation           = "static"
-    private_ip_address                      = var.fgtbranch11ip[count.index]
+    name                          = "ipconfig1"
+    subnet_id                     = element(azurerm_subnet.Branch11SUbnets.*.id, count.index)
+    private_ip_address_allocation = "static"
+    private_ip_address            = var.fgtbranch11ip[count.index]
   }
 
-    lifecycle {
-          ignore_changes = all
-    }
+  lifecycle {
+    ignore_changes = all
+  }
+
+
 }
 
 resource "azurerm_network_interface" "fgtbranch12nics" {
-  count = length(var.fgtbranch12ip)
-  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgtbranch12-port${count.index+1}"
-  location                      = element(azurerm_virtual_network.branches.*.location , 1)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  enable_ip_forwarding           = true
-  enable_accelerated_networking   = true
+  count                         = length(var.fgtbranch12ip)
+  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgtbranch12-port${count.index + 1}"
+  location                      = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name           = azurerm_resource_group.branchrg.name
+  enable_ip_forwarding          = true
+  enable_accelerated_networking = true
 
   ip_configuration {
-    name                                    = "ipconfig1"
-    subnet_id                               = element(azurerm_subnet.Branch12SUbnets.*.id , count.index)
-    private_ip_address_allocation           = "static"
-    private_ip_address                      = var.fgtbranch12ip[count.index]
+    name                          = "ipconfig1"
+    subnet_id                     = element(azurerm_subnet.Branch11SUbnets.*.id, count.index)
+    private_ip_address_allocation = "static"
+    private_ip_address            = var.fgtbranch12ip[count.index]
+
   }
-      lifecycle {
-          ignore_changes = all
-    }
+  lifecycle {
+    ignore_changes = all
+  }
+
 }
+
+/////////////////////Branch 21 NIC
 
 resource "azurerm_network_interface" "fgtbranch21nics" {
-  count = length(var.fgtbranch21ip)
-  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[2]}-fgtbranch21-port${count.index+1}"
-  location                      = element(azurerm_virtual_network.branches.*.location , 2)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  enable_ip_forwarding           = true
-  enable_accelerated_networking   = true
+  count                         = length(var.fgtbranch21ip)
+  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgtbranch21-port${count.index + 1}"
+  location                      = element(azurerm_virtual_network.branches.*.location, 1)
+  resource_group_name           = azurerm_resource_group.branchrg.name
+  enable_ip_forwarding          = true
+  enable_accelerated_networking = true
 
   ip_configuration {
-    name                                    = "ipconfig1"
-    subnet_id                               = element(azurerm_subnet.Branch21SUbnets.*.id , count.index)
-    private_ip_address_allocation           = "static"
-    private_ip_address                      = var.fgtbranch21ip[count.index]
+    name                          = "ipconfig1"
+    subnet_id                     = element(azurerm_subnet.Branch21SUbnets.*.id, count.index)
+    private_ip_address_allocation = "static"
+    private_ip_address            = var.fgtbranch21ip[count.index]
   }
 
-      lifecycle {
-          ignore_changes = all
-    }
-}
-
-resource "azurerm_network_interface" "fgtbranch22nics" {
-  count = length(var.fgtbranch22ip)
-  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[4]}-fgtbranch21-port${count.index+1}"
-  location                      = element(azurerm_virtual_network.branches.*.location , 4)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  enable_ip_forwarding           = true
-  enable_accelerated_networking   = true
-
-  ip_configuration {
-    name                                    = "ipconfig1"
-    subnet_id                               = element(azurerm_subnet.Branch22SUbnets.*.id , count.index)
-    private_ip_address_allocation           = "static"
-    private_ip_address                      = var.fgtbranch22ip[count.index]
-  }
-
-      lifecycle {
-          ignore_changes = all
-    }
+  #lifecycle {
+   # ignore_changes = all
+  #}
 
 }
-
-resource "azurerm_network_interface" "fgtbranch31nics" {
-  count = length(var.fgtbranch31ip)
-  name                          = "${var.project}-${var.TAG}-Branch-${var.branchesloc[3]}-fgtbranch31-port${count.index+1}"
-  location                      = element(azurerm_virtual_network.branches.*.location , 3)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  enable_ip_forwarding           = true
-  enable_accelerated_networking   = true
+//////////// Branch 21 public ip association to port1 
+resource "azurerm_network_interface" "fgtbranch21nics_publicip" {
+  name                          = azurerm_network_interface.fgtbranch21nics.0.name
+  location                      = element(azurerm_virtual_network.branches.*.location, 1)
+  resource_group_name           = azurerm_resource_group.branchrg.name
+  enable_ip_forwarding          = true
+  enable_accelerated_networking = true
 
   ip_configuration {
-    name                                    = "ipconfig1"
-    subnet_id                               = element(azurerm_subnet.Branch31SUbnets.*.id , count.index)
-    private_ip_address_allocation           = "static"
-    private_ip_address                      = var.fgtbranch31ip[count.index]
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.Branch21SUbnets.0.id
+    private_ip_address_allocation = "static"
+    primary                       = true
+    public_ip_address_id          = azurerm_public_ip.fgtbranch21pip.id
+
   }
 
-      lifecycle {
-          ignore_changes = all
-    }
+  #lifecycle {
+   # ignore_changes = all
+  #}
+
 }
 
 //############################ FGT VM ##################
 
 data "template_file" "fgtbranch11_customdata" {
-  template = file ("./assets/fgt-aa-userdata.tpl")
+  template = file("./assets/fgt-aa-userdata.tpl")
   vars = {
-    fgt_id              = "fgtbranch11"
-    fgt_license_file    = ""
-    fgt_username        = var.username
-    fgt_ssh_public_key  = ""
-    fgt_config_ha       = false
+    fgt_id               = "fgtbranch11"
+    fgt_license_file     = ""
+    fgt_username         = var.username
+    fgt_ssh_public_key   = ""
+    fgt_config_ha        = true
     fgt_config_autoscale = false
 
-    Port1IP             = var.fgtbranch11ip[0]
-    Port2IP             = var.fgtbranch11ip[1]
+    Port1IP = var.fgtbranch11ip[0]
+    Port2IP = var.fgtbranch11ip[1]
+    Port3IP = var.fgtbranch11ip[3]
 
     public_subnet_mask  = cidrnetmask(var.branch11subnetscidrs[0])
     private_subnet_mask = cidrnetmask(var.branch11subnetscidrs[1])
+    ha_subnet_mask      = cidrnetmask(var.branch11subnetscidrs[2])
 
-    fgt_external_gw     = cidrhost(var.branch11subnetscidrs[0], 1)
-    fgt_internal_gw     = cidrhost(var.branch11subnetscidrs[1], 1)
+    fgt_external_gw = cidrhost(var.branch11subnetscidrs[0], 1)
+    fgt_internal_gw = cidrhost(var.branch11subnetscidrs[1], 1)
+    fgt_mgmt_gw     = cidrhost(var.branch11subnetscidrs[3], 1)
 
-    vnet_network        = var.branchescidr[0]
+    vnet_network    = var.branchescidr[0]
+    fgt_ha_peerip   = var.fgtbranch12ip[2]
+    fgt_ha_priority = "100"
+  }
+}
+
+data "template_file" "fgtbranch12_customdata" {
+  template = file("./assets/fgt-aa-userdata.tpl")
+  vars = {
+    fgt_id               = "fgtbranch12"
+    fgt_license_file     = ""
+    fgt_username         = var.username
+    fgt_ssh_public_key   = ""
+    fgt_config_ha        = true
+    fgt_config_autoscale = false
+
+    Port1IP = var.fgtbranch12ip[0]
+    Port2IP = var.fgtbranch12ip[1]
+    Port3IP = var.fgtbranch12ip[3]
+
+    public_subnet_mask  = cidrnetmask(var.branch11subnetscidrs[0])
+    private_subnet_mask = cidrnetmask(var.branch11subnetscidrs[1])
+    ha_subnet_mask      = cidrnetmask(var.branch11subnetscidrs[2])
+
+    fgt_external_gw = cidrhost(var.branch11subnetscidrs[0], 1)
+    fgt_internal_gw = cidrhost(var.branch11subnetscidrs[1], 1)
+    fgt_mgmt_gw     = cidrhost(var.branch11subnetscidrs[3], 1)
+
+    vnet_network    = var.branchescidr[0]
+    fgt_ha_peerip   = var.fgtbranch11ip[2]
+    fgt_ha_priority = "50"
   }
 }
 
 resource "azurerm_virtual_machine" "fgtbranch11" {
   name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgt11"
-  location                     = element(azurerm_virtual_network.branches.*.location , 0 )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_interface_ids        = [azurerm_network_interface.fgtbranch11nics.0.id, azurerm_network_interface.fgtbranch11nics.1.id, azurerm_network_interface.fgtbranch11nics.2.id ]
-  primary_network_interface_id = element (azurerm_network_interface.fgtbranch11nics.*.id , 0)
+  location                     = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name          = azurerm_resource_group.branchrg.name
+  network_interface_ids        = [azurerm_network_interface.fgtbranch11nics.0.id, azurerm_network_interface.fgtbranch11nics.1.id, azurerm_network_interface.fgtbranch11nics.2.id, azurerm_network_interface.fgtbranch11nics.3.id]
+  primary_network_interface_id = element(azurerm_network_interface.fgtbranch11nics.*.id, 0)
   vm_size                      = var.fgtbranch_vmsize
 
   identity {
@@ -231,11 +223,11 @@ resource "azurerm_virtual_machine" "fgtbranch11" {
   }
 
   storage_data_disk {
-    name = "${var.project}_${var.TAG}_Branch_${var.branchesloc[0]}_fgt11_DataDisk"
+    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[0]}_fgt11_DataDisk"
     managed_disk_type = "Premium_LRS"
-    create_option = "Empty"
-    lun = 0
-    disk_size_gb = "10"
+    create_option     = "Empty"
+    lun               = 0
+    disk_size_gb      = "10"
   }
   os_profile {
     computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgt11"
@@ -248,44 +240,21 @@ resource "azurerm_virtual_machine" "fgtbranch11" {
     disable_password_authentication = false
   }
 
+  #zones = [1]
+
   tags = {
     Project = "${var.project}"
-    Role = "FTNT"
+    Role    = "FTNT"
   }
-
-} 
-
-///////////////////////////////////////////////////
-
-data "template_file" "fgtbranch12_customdata" {
-  template = file ("./assets/fgt-aa-userdata.tpl")
-  vars = {
-    fgt_id              = "fgtbranch12"
-    fgt_license_file    = ""
-    fgt_username        = var.username
-    fgt_ssh_public_key  = ""
-    fgt_config_ha       = false
-    fgt_config_autoscale = false
-
-    Port1IP             = var.fgtbranch12ip[0]
-    Port2IP             = var.fgtbranch12ip[1]
-
-    public_subnet_mask  = cidrnetmask(var.branch12subnetscidrs[0])
-    private_subnet_mask = cidrnetmask(var.branch12subnetscidrs[1])
-
-    fgt_external_gw     = cidrhost(var.branch12subnetscidrs[0], 1)
-    fgt_internal_gw     = cidrhost(var.branch12subnetscidrs[1], 1)
-
-    vnet_network        = var.branchescidr[1]
-  }
+  depends_on = [azurerm_network_interface_backend_address_pool_association.ilb_backend_branch1_assoc_1, azurerm_network_interface_backend_address_pool_association.ilb_backend_branch1_assoc_2]
 }
 
 resource "azurerm_virtual_machine" "fgtbranch12" {
-  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgt12"
-  location                     = element(azurerm_virtual_network.branches.*.location , 1 )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_interface_ids        = [azurerm_network_interface.fgtbranch12nics.0.id, azurerm_network_interface.fgtbranch12nics.1.id, azurerm_network_interface.fgtbranch12nics.2.id ]
-  primary_network_interface_id = element (azurerm_network_interface.fgtbranch12nics.*.id , 0)
+  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgt12"
+  location                     = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name          = azurerm_resource_group.branchrg.name
+  network_interface_ids        = [azurerm_network_interface.fgtbranch12nics.0.id, azurerm_network_interface.fgtbranch12nics.1.id, azurerm_network_interface.fgtbranch12nics.2.id, azurerm_network_interface.fgtbranch12nics.3.id]
+  primary_network_interface_id = element(azurerm_network_interface.fgtbranch12nics.*.id, 0)
   vm_size                      = var.fgtbranch_vmsize
 
   identity {
@@ -306,21 +275,21 @@ resource "azurerm_virtual_machine" "fgtbranch12" {
   }
 
   storage_os_disk {
-    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[1]}_fgt12_OSDisk"
+    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[0]}_fgt12_OSDisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   storage_data_disk {
-    name = "${var.project}_${var.TAG}_Branch_${var.branchesloc[1]}_fgt12_DataDisk"
+    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[0]}_fgt12_DataDisk"
     managed_disk_type = "Premium_LRS"
-    create_option = "Empty"
-    lun = 0
-    disk_size_gb = "10"
+    create_option     = "Empty"
+    lun               = 0
+    disk_size_gb      = "10"
   }
   os_profile {
-    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgt12"
+    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgt12"
     admin_username = var.username
     admin_password = var.password
     custom_data    = data.template_file.fgtbranch12_customdata.rendered
@@ -330,46 +299,47 @@ resource "azurerm_virtual_machine" "fgtbranch12" {
     disable_password_authentication = false
   }
 
+  #zones = [2]
 
   tags = {
     Project = "${var.project}"
-    Role = "FTNT"
+    Role    = "FTNT"
   }
-
+  depends_on = [azurerm_network_interface_backend_address_pool_association.ilb_backend_branch1_assoc_1, azurerm_network_interface_backend_address_pool_association.ilb_backend_branch1_assoc_2]
 }
 
+/////////////////////////////////////////////////// branch21
 
-///////////////////////////////////////////////////
 
 data "template_file" "fgtbranch21_customdata" {
-  template = file ("./assets/fgt-aa-userdata.tpl")
+  template = file("./assets/fgt-aa-userdata.tpl")
   vars = {
-    fgt_id              = "fgtbranch21"
-    fgt_license_file    = ""
-    fgt_username        = var.username
-    fgt_ssh_public_key  = ""
-    fgt_config_ha       = false
+    fgt_id               = "fgtbranch21"
+    fgt_license_file     = ""
+    fgt_username         = var.username
+    fgt_ssh_public_key   = ""
+    fgt_config_ha        = false
     fgt_config_autoscale = false
 
-    Port1IP             = var.fgtbranch21ip[0]
-    Port2IP             = var.fgtbranch21ip[1]
+    Port1IP = var.fgtbranch21ip[0]
+    Port2IP = var.fgtbranch21ip[1]
 
     public_subnet_mask  = cidrnetmask(var.branch21subnetscidrs[0])
     private_subnet_mask = cidrnetmask(var.branch21subnetscidrs[1])
 
-    fgt_external_gw     = cidrhost(var.branch21subnetscidrs[0], 1)
-    fgt_internal_gw     = cidrhost(var.branch21subnetscidrs[1], 1)
+    fgt_external_gw = cidrhost(var.branch21subnetscidrs[0], 1)
+    fgt_internal_gw = cidrhost(var.branch21subnetscidrs[1], 1)
 
-    vnet_network        = var.branchescidr[2]
+    vnet_network = var.branchescidr[1]
   }
 }
 
 resource "azurerm_virtual_machine" "fgtbranch21" {
-  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[2]}-fgt21"
-  location                     = element(azurerm_virtual_network.branches.*.location , 2 )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_interface_ids        = [azurerm_network_interface.fgtbranch21nics.0.id, azurerm_network_interface.fgtbranch21nics.1.id, azurerm_network_interface.fgtbranch21nics.2.id ]
-  primary_network_interface_id = element (azurerm_network_interface.fgtbranch21nics.*.id , 0)
+  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgt21"
+  location                     = element(azurerm_virtual_network.branches.*.location, 1)
+  resource_group_name          = azurerm_resource_group.branchrg.name
+  network_interface_ids        = [azurerm_network_interface.fgtbranch21nics.0.id, azurerm_network_interface.fgtbranch21nics.1.id, azurerm_network_interface.fgtbranch21nics.2.id]
+  primary_network_interface_id = element(azurerm_network_interface.fgtbranch21nics.*.id, 0)
   vm_size                      = var.fgtbranch_vmsize
 
   identity {
@@ -390,21 +360,21 @@ resource "azurerm_virtual_machine" "fgtbranch21" {
   }
 
   storage_os_disk {
-    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[2]}_fgt21_OSDisk"
+    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[1]}_fgt21_OSDisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   storage_data_disk {
-    name = "${var.project}_${var.TAG}_Branch_${var.branchesloc[2]}_fgt21_DataDisk"
+    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[1]}_fgt21_DataDisk"
     managed_disk_type = "Premium_LRS"
-    create_option = "Empty"
-    lun = 0
-    disk_size_gb = "10"
+    create_option     = "Empty"
+    lun               = 0
+    disk_size_gb      = "10"
   }
   os_profile {
-    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[2]}-fgt21"
+    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgt21"
     admin_username = var.username
     admin_password = var.password
     custom_data    = data.template_file.fgtbranch21_customdata.rendered
@@ -417,764 +387,327 @@ resource "azurerm_virtual_machine" "fgtbranch21" {
 
   tags = {
     Project = "${var.project}"
-    Role = "FTNT"
+    Role    = "FTNT"
   }
 
 }
 
-///////////////////////////////////////////////////
+//############################ PIP and External LB  ####################
 
-data "template_file" "fgtbranch22_customdata" {
-  template = file ("./assets/fgt-aa-userdata.tpl")
-  vars = {
-    fgt_id              = "fgtbranch22"
-    fgt_license_file    = ""
-    fgt_username        = var.username
-    fgt_ssh_public_key  = ""
-    fgt_config_ha       = false
-    fgt_config_autoscale = false
-
-    Port1IP             = var.fgtbranch22ip[0]
-    Port2IP             = var.fgtbranch22ip[1]
-
-    public_subnet_mask  = cidrnetmask(var.branch22subnetscidrs[0])
-    private_subnet_mask = cidrnetmask(var.branch22subnetscidrs[1])
-
-    fgt_external_gw     = cidrhost(var.branch22subnetscidrs[0], 1)
-    fgt_internal_gw     = cidrhost(var.branch22subnetscidrs[1], 1)
-
-    vnet_network        = var.branchescidr[3]
-  }
-}
-
-resource "azurerm_virtual_machine" "fgtbranch22" {
-  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[4]}-fgt22"
-  location                     = element(azurerm_virtual_network.branches.*.location , 4 )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_interface_ids        = [azurerm_network_interface.fgtbranch22nics.0.id, azurerm_network_interface.fgtbranch22nics.1.id, azurerm_network_interface.fgtbranch22nics.2.id ]
-  primary_network_interface_id = element (azurerm_network_interface.fgtbranch22nics.*.id , 0)
-  vm_size                      = var.fgtbranch_vmsize
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  storage_image_reference {
-    publisher = "fortinet"
-    offer     = "fortinet_fortigate-vm_v5"
-    sku       = var.FGT_IMAGE_SKU
-    version   = var.FGT_VERSION
-  }
-
-  plan {
-    publisher = "fortinet"
-    product   = "fortinet_fortigate-vm_v5"
-    name      = var.FGT_IMAGE_SKU
-  }
-
-  storage_os_disk {
-    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[4]}_fgt22_OSDisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  storage_data_disk {
-    name = "${var.project}_${var.TAG}_Branch_${var.branchesloc[4]}_fgt22_DataDisk"
-    managed_disk_type = "Premium_LRS"
-    create_option = "Empty"
-    lun = 0
-    disk_size_gb = "10"
-  }
-  os_profile {
-    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[4]}-fgt22"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.fgtbranch22_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-  tags = {
-    Project = "${var.project}"
-    Role = "FTNT"
-  }
-
-}
-
-
-///////////////////////////////////////////////////
-
-data "template_file" "fgtbranch31_customdata" {
-  template = file ("./assets/fgt-aa-userdata.tpl")
-  vars = {
-    fgt_id              = "fgtbranch31"
-    fgt_license_file    = ""
-    fgt_username        = var.username
-    fgt_ssh_public_key  = ""
-    fgt_config_ha       = false
-    fgt_config_autoscale = false
-
-    Port1IP             = var.fgtbranch31ip[0]
-    Port2IP             = var.fgtbranch31ip[1]
-
-    public_subnet_mask  = cidrnetmask(var.branch31subnetscidrs[0])
-    private_subnet_mask = cidrnetmask(var.branch31subnetscidrs[1])
-
-    fgt_external_gw     = cidrhost(var.branch31subnetscidrs[0], 1)
-    fgt_internal_gw     = cidrhost(var.branch31subnetscidrs[1], 1)
-
-    vnet_network        = var.branchescidr[3]
-  }
-}
-
-resource "azurerm_virtual_machine" "fgtbranch31" {
-  name                         = "${var.project}-${var.TAG}-Branch-${var.branchesloc[3]}-fgt31"
-  location                     = element(azurerm_virtual_network.branches.*.location , 3 )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_interface_ids        = [azurerm_network_interface.fgtbranch31nics.0.id, azurerm_network_interface.fgtbranch31nics.1.id , azurerm_network_interface.fgtbranch31nics.2.id ]
-  primary_network_interface_id = element (azurerm_network_interface.fgtbranch31nics.*.id , 0)
-  vm_size                      = var.fgtbranch_vmsize
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  storage_image_reference {
-    publisher = "fortinet"
-    offer     = "fortinet_fortigate-vm_v5"
-    sku       = var.FGT_IMAGE_SKU
-    version   = var.FGT_VERSION
-  }
-
-  plan {
-    publisher = "fortinet"
-    product   = "fortinet_fortigate-vm_v5"
-    name      = var.FGT_IMAGE_SKU
-  }
-
-  storage_os_disk {
-    name              = "${var.project}_${var.TAG}_Branch_${var.branchesloc[3]}_fgt31_OSDisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  storage_data_disk {
-    name = "${var.project}_${var.TAG}_Branch_${var.branchesloc[3]}_fgt31_DataDisk"
-    managed_disk_type = "Premium_LRS"
-    create_option = "Empty"
-    lun = 0
-    disk_size_gb = "10"
-  }
-  os_profile {
-    computer_name  = "${var.project}-${var.TAG}-Branch-${var.branchesloc[3]}-fgt31"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.fgtbranch31_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "FTNT"
-  }
-
-}
-
-
-
-//############################ Create FGT NSG ##################
-
-resource "azurerm_network_security_group" "branch_fgt_nsg_pub" {
-  count = length(var.branchesloc)
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[count.index]}-pub-nsg"
-  location                      = element(azurerm_virtual_network.branches.*.location , count.index )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-}
-
-  
-resource "azurerm_network_security_rule" "branch_fgt_nsg_pub_egress" {
-  count = length(var.branchesloc)
-  name                        = "AllOutbound"
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_security_group_name = element(azurerm_network_security_group.branch_fgt_nsg_pub.*.name , count.index )
-  priority                    = 100
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  
-}
-resource "azurerm_network_security_rule" "branch_fgt_nsg_pub_ingress_1" {
-  count = length(var.branchesloc)
-  name                        = "AllInbound"
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_security_group_name = element(azurerm_network_security_group.branch_fgt_nsg_pub.*.name , count.index )
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  
-}
-
-///////////////////
-
-resource "azurerm_network_security_group" "branch_fgt_nsg_priv" {
-  count = length(var.branchesloc)
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[count.index]}-priv-nsg"
-  location                      = element(azurerm_virtual_network.branches.*.location , count.index )
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-}
-
-  resource "azurerm_network_security_rule" "branch_fgt_nsg_priv_egress" {
-  count = length(var.branchesloc)
-  name                        = "AllOutbound"
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_security_group_name = element(azurerm_network_security_group.branch_fgt_nsg_priv.*.name , count.index )
-  priority                    = 100
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  
-}
-resource "azurerm_network_security_rule" "branch_fgt_nsg_priv_ingress_1" {
-  count = length(var.branchesloc)
-  name                        = "TCP_ALL"
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_security_group_name = element(azurerm_network_security_group.branch_fgt_nsg_priv.*.name , count.index )
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "172.16.0.0/12"
-  destination_address_prefix  = "*"
-  
-} 
-resource "azurerm_network_security_rule" "branch_fgt_nsg_priv_ingress_2" {
-  count = length(var.hubsloc)
-  name                        = "UDP_ALL"
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-  network_security_group_name = element(azurerm_network_security_group.branch_fgt_nsg_priv.*.name , count.index )
-  priority                    = 101
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Udp"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "172.16.0.0/12"
-  destination_address_prefix  = "*"
-  
-} 
-
-
-//////////////////
-
-resource "azurerm_public_ip" "fgtbranch11pip" {
-  count               = 2
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[0]}-fgt11pip-${count.index +1}"
-  location            = element(azurerm_virtual_network.branches.*.location , 0 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
+resource "azurerm_public_ip" "elbpip_branch1" {
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbpip"
+  location            = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name = azurerm_resource_group.branchrg.name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
-/*
-resource "azurerm_public_ip" "fgtbranch12pip" {
-  count               = 2
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[count.index]}-fgt12pip-${count.index +1}"
-  location            = element(azurerm_virtual_network.branches.*.location , 1 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  allocation_method   = "Static"
+
+resource "azurerm_lb" "elbs_branch1" {
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elb"
+  location            = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name = azurerm_resource_group.branchrg.name
   sku                 = "Standard"
-} */
+
+  frontend_ip_configuration {
+    name                 = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
+    public_ip_address_id = azurerm_public_ip.elbpip_branch1.id
+  }
+}
+
+resource "azurerm_lb_backend_address_pool" "elb_backend_branch1" {
+  resource_group_name = azurerm_resource_group.branchrg.name
+  loadbalancer_id     = azurerm_lb.elbs_branch1.id
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elb-fgt-pool"
+}
+
+resource "azurerm_lb_probe" "elb_probe_branch1" {
+  resource_group_name = azurerm_resource_group.branchrg.name
+  loadbalancer_id     = azurerm_lb.elbs_branch1.id
+  name                = "lbprobe-${var.lbprob}"
+  port                = var.lbprob
+  protocol            = "Tcp"
+}
+
+//////////////////elb rules
+
+resource "azurerm_lb_rule" "elb_rule_udp500_branch1" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = element(azurerm_lb.elbs_branch1.*.id, 0)
+  name                           = "elb-fgt-ike-udp-500"
+  protocol                       = "Udp"
+  frontend_port                  = 500
+  backend_port                   = 500
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
+  probe_id                       = element(azurerm_lb_probe.elb_probe_branch1.*.id, 0)
+  backend_address_pool_id        = element(azurerm_lb_backend_address_pool.elb_backend_branch1.*.id, 0)
+  enable_floating_ip             = false
+  disable_outbound_snat          = true
+}
+
+resource "azurerm_lb_rule" "elb_rule_udp4500_branch1" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = element(azurerm_lb.elbs_branch1.*.id, 0)
+  name                           = "elb-fgt-ike-udp-4500"
+  protocol                       = "Udp"
+  frontend_port                  = 4500
+  backend_port                   = 4500
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
+  probe_id                       = element(azurerm_lb_probe.elb_probe_branch1.*.id, 0)
+  backend_address_pool_id        = element(azurerm_lb_backend_address_pool.elb_backend_branch1.*.id, 0)
+  enable_floating_ip             = false
+  disable_outbound_snat          = true
+}
+
+
+//############################ External LB Nics Association ####################
+
+resource "azurerm_network_interface_backend_address_pool_association" "elb_backend_branch1_assoc_1" {
+  network_interface_id    = azurerm_network_interface.fgtbranch11nics.0.id
+  ip_configuration_name   = "ipconfig1"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.elb_backend_branch1.id
+}
+resource "azurerm_network_interface_backend_address_pool_association" "elb_backend_branch1_assoc_2" {
+  network_interface_id    = azurerm_network_interface.fgtbranch12nics.0.id
+  ip_configuration_name   = "ipconfig1"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.elb_backend_branch1.id
+}
+
+//############################ Internal LB  ############################
+
+resource "azurerm_lb" "ilb_branch1" {
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-ilb"
+  location            = element(azurerm_virtual_network.branches.*.location, 0)
+  resource_group_name = azurerm_resource_group.branchrg.name
+  sku                 = "Standard"
+
+  frontend_ip_configuration {
+    name                          = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-ilbip"
+    subnet_id                     = element(azurerm_subnet.Branch11SUbnets.*.id, 1)
+    private_ip_address            = var.ilbip_branch1[0]
+    private_ip_address_allocation = "Static"
+  }
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+resource "azurerm_lb_probe" "ilb_branch1_probe" {
+  resource_group_name = azurerm_resource_group.branchrg.name
+  loadbalancer_id     = azurerm_lb.ilb_branch1.id
+  name                = "lbprobe"
+  port                = var.lbprob
+  protocol            = "Tcp"
+  interval_in_seconds = "10"
+}
+
+//==================================Internal LB Pools================================
+
+resource "azurerm_lb_backend_address_pool" "ilb_backend_branch1" {
+  resource_group_name = azurerm_resource_group.branchrg.name
+  loadbalancer_id     = azurerm_lb.ilb_branch1.id
+  name                = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-ilb-fgt-pool"
+}
+
+//==================================Internal LB Nics Association=============================
+
+resource "azurerm_network_interface_backend_address_pool_association" "ilb_backend_branch1_assoc_1" {
+  network_interface_id    = azurerm_network_interface.fgtbranch11nics.1.id
+  ip_configuration_name   = "ipconfig1"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.ilb_backend_branch1.id
+}
+resource "azurerm_network_interface_backend_address_pool_association" "ilb_backend_branch1_assoc_2" {
+  network_interface_id    = azurerm_network_interface.fgtbranch12nics.1.id
+  ip_configuration_name   = "ipconfig1"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.ilb_backend_branch1.id
+}
+
+//==================================Internal LB Rules================================
+
+resource "azurerm_lb_rule" "ilb1_branch1_haports_rule" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = azurerm_lb.ilb_branch1.id
+  name                           = "ilb_haports_rule"
+  protocol                       = "All"
+  frontend_port                  = 0
+  backend_port                   = 0
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-ilbip"
+  probe_id                       = azurerm_lb_probe.ilb_branch1_probe.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.ilb_backend_branch1.id
+  enable_floating_ip             = true
+}
+
+//############################## FG 21 PUBLIC IP #######################
 
 resource "azurerm_public_ip" "fgtbranch21pip" {
-  count               = 2
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[2]}-fgt21pip-${count.index +1}"
-  location            = element(azurerm_virtual_network.branches.*.location , 2 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
-resource "azurerm_public_ip" "fgtbranch22pip" {
-  count               = 2
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[4]}-fgt22pip-${count.index +1}"
-  location            = element(azurerm_virtual_network.branches.*.location , 4 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
-resource "azurerm_public_ip" "fgtbranch31pip" {
-  count               = 2
-  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[3]}-fgt31pip-${count.index +1}"
-  location            = element(azurerm_virtual_network.branches.*.location , 3 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
+  name                = "${var.project}-${var.TAG}-Branch-${var.branchesloc[1]}-fgt21pip"
+  location            = element(azurerm_virtual_network.branches.*.location, 1)
+  resource_group_name = azurerm_resource_group.branchrg.name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
 
-//############################ Create Pivate Route Tables ##################
+# ///////////// VNET peering 
+# resource "azurerm_virtual_network_peering" "hub1-to-branch1" {
+#   name                      = "${var.project}-Hub-${var.hubsloc[0]}-to-branch-${var.branchesloc[0]}"
+#   resource_group_name       = azurerm_resource_group.hubrg.name
+#   virtual_network_name      = element(azurerm_virtual_network.Hubs.*.name, 0)
+#   remote_virtual_network_id = element(azurerm_virtual_network.branches.*.id, 0)
 
-resource "azurerm_route_table" "Branch11privRTB" {
-  name                          = "${var.project}-${var.TAG}-branch11-priv_RTB"
-  location            = element(azurerm_virtual_network.branches.*.location , 0 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic      = true
+
+
+# }
+
+# resource "azurerm_virtual_network_peering" "branch1-to-hub1" {
+#   name                      = "${var.project}-branch-${var.branchesloc[0]}-to-Hub-${var.hubsloc[0]}"
+#   resource_group_name       = azurerm_resource_group.branchrg.name
+#   virtual_network_name      = element(azurerm_virtual_network.branches.*.name, 0)
+#   remote_virtual_network_id = element(azurerm_virtual_network.Hubs.*.id, 0)
+
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic      = true
+
+# }
+
+# resource "azurerm_virtual_network_peering" "hub1-to-branch2" {
+#   name                      = "${var.project}-Hub-${var.hubsloc[0]}-to-branch-${var.branchesloc[1]}"
+#   resource_group_name       = azurerm_resource_group.hubrg.name
+#   virtual_network_name      = element(azurerm_virtual_network.Hubs.*.name, 0)
+#   remote_virtual_network_id = element(azurerm_virtual_network.branches.*.id, 1)
+
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic      = true
+
+
+# }
+
+# resource "azurerm_virtual_network_peering" "branch2-to-hub1" {
+#   name                      = "${var.project}-branch-${var.branchesloc[1]}-to-Hub-${var.hubsloc[0]}"
+#   resource_group_name       = azurerm_resource_group.branchrg.name
+#   virtual_network_name      = element(azurerm_virtual_network.branches.*.name, 1)
+#   remote_virtual_network_id = element(azurerm_virtual_network.Hubs.*.id, 0)
+
+#   allow_virtual_network_access = true
+#   allow_forwarded_traffic      = true
+
+# }
+
+resource "azurerm_lb_nat_rule" "fgtbranch11mgmthttps" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = azurerm_lb.elbs_branch1.id
+  name                           = "fgtbranch11-mgmt-40030"
+  protocol                       = "Tcp"
+  frontend_port                  = 40030
+  backend_port                   = 34443
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
 }
 
-resource "azurerm_subnet_route_table_association" "Branch11privRTB_assoc" {
-  subnet_id      = element(azurerm_subnet.Branch11SUbnets.*.id , 2)
-  route_table_id = azurerm_route_table.Branch11privRTB.id
+resource "azurerm_lb_nat_rule" "fgtbranch12mgmthttps" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = azurerm_lb.elbs_branch1.id
+  name                           = "fgtbranch12-mgmt-40031"
+  protocol                       = "Tcp"
+  frontend_port                  = 40031
+  backend_port                   = 34443
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
 }
 
-resource "azurerm_route" "Branch11priv_default" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  route_table_name    = azurerm_route_table.Branch11privRTB.name
-  address_prefix      = "0.0.0.0/0"
-  next_hop_type       = "VirtualAppliance"
-  next_hop_in_ip_address = var.fgtbranch11ip[2]
+resource "azurerm_lb_nat_rule" "fgtbranch11mgmtssh" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = azurerm_lb.elbs_branch1.id
+  name                           = "fgtbranch11-ssh-50030"
+  protocol                       = "Tcp"
+  frontend_port                  = 50030
+  backend_port                   = 3422
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
 }
 
-///////////////////////////////
-
-resource "azurerm_route_table" "Branch12privRTB" {
-  name                          = "${var.project}-${var.TAG}-branch12-priv_RTB"
-  location            = element(azurerm_virtual_network.branches.*.location , 1 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
+resource "azurerm_lb_nat_rule" "fgtbranch12mgmtssh" {
+  resource_group_name            = azurerm_resource_group.branchrg.name
+  loadbalancer_id                = azurerm_lb.elbs_branch1.id
+  name                           = "fgtbranch12-ssh-50031"
+  protocol                       = "Tcp"
+  frontend_port                  = 50031
+  backend_port                   = 3422
+  frontend_ip_configuration_name = "${var.project}-${var.TAG}-branch-${var.branchesloc[0]}-elbip"
 }
 
-resource "azurerm_subnet_route_table_association" "Branch12privRTB_assoc" {
-  subnet_id      = element(azurerm_subnet.Branch12SUbnets.*.id , 2)
-  route_table_id = azurerm_route_table.Branch12privRTB.id
+//##########################Assign VM to NAT rule #######################
+
+resource "azurerm_network_interface_nat_rule_association" "fgtbranch11mgmthttpsvm" {
+  network_interface_id    = azurerm_network_interface.fgtbranch11nics.3.id
+  ip_configuration_name   = "ipconfig1"
+  nat_rule_id             = azurerm_lb_nat_rule.fgtbranch11mgmthttps.id
 }
 
-resource "azurerm_route" "Branch12priv_default" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  route_table_name    = azurerm_route_table.Branch12privRTB.name
-  address_prefix      = "0.0.0.0/0"
-  next_hop_type       = "VirtualAppliance"
-  next_hop_in_ip_address = var.fgtbranch12ip[2]
+resource "azurerm_network_interface_nat_rule_association" "fgtbranch11mgmtsshvm" {
+  network_interface_id    = azurerm_network_interface.fgtbranch11nics.3.id
+  ip_configuration_name   = "ipconfig1"
+  nat_rule_id             = azurerm_lb_nat_rule.fgtbranch11mgmtssh.id
 }
 
-
-///////////////////////////////
-
-resource "azurerm_route_table" "Branch21privRTB" {
-  name                          = "${var.project}-${var.TAG}-branch21-priv_RTB"
-  location            = element(azurerm_virtual_network.branches.*.location , 2 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
+resource "azurerm_network_interface_nat_rule_association" "fgtbranch12mgmthttpsvm" {
+  network_interface_id    = azurerm_network_interface.fgtbranch12nics.3.id
+  ip_configuration_name   = "ipconfig1"
+  nat_rule_id             = azurerm_lb_nat_rule.fgtbranch12mgmthttps.id
 }
 
-resource "azurerm_subnet_route_table_association" "Branch21privRTB_assoc" {
-  subnet_id      = element(azurerm_subnet.Branch21SUbnets.*.id , 2)
-  route_table_id = azurerm_route_table.Branch21privRTB.id
+resource "azurerm_network_interface_nat_rule_association" "fgtbranch12mgmtsshvm" {
+  network_interface_id    = azurerm_network_interface.fgtbranch12nics.3.id
+  ip_configuration_name   = "ipconfig1"
+  nat_rule_id             = azurerm_lb_nat_rule.fgtbranch12mgmtssh.id
 }
 
-resource "azurerm_route" "Branch21priv_default" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  route_table_name    = azurerm_route_table.Branch21privRTB.name
-  address_prefix      = "0.0.0.0/0"
-  next_hop_type       = "VirtualAppliance"
-  next_hop_in_ip_address = var.fgtbranch21ip[2]
+//############################ NIC to NSG  ############################
+
+resource "azurerm_network_interface_security_group_association" "fgtbranch11pub" {
+  network_interface_id      = azurerm_network_interface.fgtbranch11nics.0.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_pub.0.id
+}
+resource "azurerm_network_interface_security_group_association" "fgtbranch12pub" {
+  network_interface_id      = azurerm_network_interface.fgtbranch12nics.0.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_pub.0.id
 }
 
-
-
-///////////////////////////////
-
-resource "azurerm_route_table" "Branch22privRTB" {
-  name                          = "${var.project}-${var.TAG}-branch22-priv_RTB"
-  location            = element(azurerm_virtual_network.branches.*.location , 4 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
-}
-
-resource "azurerm_subnet_route_table_association" "Branch22privRTB_assoc" {
-  subnet_id      = element(azurerm_subnet.Branch22SUbnets.*.id , 2)
-  route_table_id = azurerm_route_table.Branch22privRTB.id
-}
-
-
-resource "azurerm_route" "Branch22priv_default" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  route_table_name    = azurerm_route_table.Branch22privRTB.name
-  address_prefix      = "0.0.0.0/0"
-  next_hop_type       = "VirtualAppliance"
-  next_hop_in_ip_address = var.fgtbranch22ip[2]
-}
-
-
-
-///////////////////////////////
-
-resource "azurerm_route_table" "Branch31privRTB" {
-  name                          = "${var.project}-${var.TAG}-branch31-priv_RTB"
-  location            = element(azurerm_virtual_network.branches.*.location , 3 )
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  //disable_bgp_route_propagation = false
-  tags = {
-    Project = "${var.project}"
-  }
-}
-
-resource "azurerm_subnet_route_table_association" "Branch31privRTB_assoc" {
-  subnet_id      = element(azurerm_subnet.Branch31SUbnets.*.id , 2)
-  route_table_id = azurerm_route_table.Branch31privRTB.id
-}
-
-resource "azurerm_route" "Branch31priv_default" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.COATSBranchesRG.name
-  route_table_name    = azurerm_route_table.Branch31privRTB.name
-  address_prefix      = "0.0.0.0/0"
-  next_hop_type       = "VirtualAppliance"
-  next_hop_in_ip_address = var.fgtbranch31ip[2]
+resource "azurerm_network_interface_security_group_association" "fgtbranch21pub" {
+  network_interface_id      = azurerm_network_interface.fgtbranch21nics.0.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_pub.1.id
 }
 
 
-
-//############################ Create Linux VMs inside Branch Sites ##################
-
-data "template_file" "branch_lnx_customdata" {
-  template = "./assets/lnx-spoke.tpl"
-
-  vars = {
-  }
+/////////////////////////////////
+resource "azurerm_network_interface_security_group_association" "fgtbranch11priv" {
+  network_interface_id      = azurerm_network_interface.fgtbranch11nics.1.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_priv.0.id
+}
+resource "azurerm_network_interface_security_group_association" "fgtbranch12priv" {
+  network_interface_id      = azurerm_network_interface.fgtbranch12nics.1.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_priv.0.id
 }
 
+resource "azurerm_network_interface_security_group_association" "fgtbranch21priv" {
+  network_interface_id      = azurerm_network_interface.fgtbranch21nics.1.id
+  network_security_group_id = azurerm_network_security_group.branch_fgt_nsg_priv.1.id
+}
+////////////////////////////////
 
-///////////////////LNX Branch11
-
-resource "azurerm_network_interface" "branch11lnxnic" {
-  name                          = "${var.project}-${var.TAG}-Branch11-${var.branchesloc[0]}-lnx-port1"
-  location                      = element(azurerm_virtual_network.branches.*.location , 0)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  enable_ip_forwarding            = false
-  enable_accelerated_networking   = false
-  //network_security_group_id = "${azurerm_network_security_group.fgt_nsg.id}"
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = element(azurerm_subnet.Branch11SUbnets.*.id, 2)
-    private_ip_address_allocation = "Dynamic"
-  }
+resource "azurerm_network_interface_security_group_association" "fgtbranch11ha" {
+  network_interface_id      = azurerm_network_interface.fgtbranch11nics.2.id
+  network_security_group_id = azurerm_network_security_group.branch1_fgt_nsg_ha.id
+}
+resource "azurerm_network_interface_security_group_association" "fgtbranch12ha" {
+  network_interface_id      = azurerm_network_interface.fgtbranch12nics.2.id
+  network_security_group_id = azurerm_network_security_group.branch1_fgt_nsg_ha.id
 }
 
-resource "azurerm_virtual_machine" "branch11lnx" {
-  name                  = "branch11lnx"
-  location                      = element(azurerm_virtual_network.branches.*.location , 0)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  network_interface_ids = [azurerm_network_interface.branch11lnxnic.id]
-  vm_size               = var.lnx_vmsize
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "branch11lnx-OSDISK"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "branch11lnx"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.branch_lnx_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "Branch11"
-  }
-
+/////////////////////////////////
+resource "azurerm_network_interface_security_group_association" "fgtbranch11mgmt" {
+  network_interface_id      = azurerm_network_interface.fgtbranch11nics.3.id
+  network_security_group_id = azurerm_network_security_group.branch1_fgt_nsg_hmgmt.id
 }
-
-///////////////////LNX Branch12
-
-resource "azurerm_network_interface" "branch12lnxnic" {
-  name                          = "${var.project}-${var.TAG}-Branch12-${var.branchesloc[1]}-lnx-port1"
-  location                      = element(azurerm_virtual_network.branches.*.location , 1)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  enable_ip_forwarding            = false
-  enable_accelerated_networking   = false
-  //network_security_group_id = "${azurerm_network_security_group.fgt_nsg.id}"
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = element(azurerm_subnet.Branch12SUbnets.*.id, 2)
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-resource "azurerm_virtual_machine" "branch12lnx" {
-  name                          = "branch12lnx"
-  location                      = element(azurerm_virtual_network.branches.*.location , 1)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  network_interface_ids = [azurerm_network_interface.branch12lnxnic.id]
-  vm_size               = var.lnx_vmsize
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "branch12lnx-OSDISK"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "branch12lnx"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.branch_lnx_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "Branch12"
-  }
-
-}
-
-///////////////////LNX Branch21
-
-resource "azurerm_network_interface" "branch21lnxnic" {
-  name                          = "${var.project}-${var.TAG}-Branch21-${var.branchesloc[2]}-lnx-port1"
-  location                      = element(azurerm_virtual_network.branches.*.location , 2)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  enable_ip_forwarding            = false
-  enable_accelerated_networking   = false
-  //network_security_group_id = "${azurerm_network_security_group.fgt_nsg.id}"
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = element(azurerm_subnet.Branch21SUbnets.*.id, 2)
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-resource "azurerm_virtual_machine" "branch21lnx" {
-  name                          = "branch21lnx"
-  location                      = element(azurerm_virtual_network.branches.*.location , 2)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  network_interface_ids = [azurerm_network_interface.branch21lnxnic.id]
-  vm_size               = var.lnx_vmsize
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "branch21lnx-OSDISK"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "branch21lnx"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.branch_lnx_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "Branch21"
-  }
-
-}
-
-///////////////////LNX Branch31
-
-resource "azurerm_network_interface" "branch31lnxnic" {
-  name                          = "${var.project}-${var.TAG}-Branch31-${var.branchesloc[3]}-lnx-port1"
-  location                      = element(azurerm_virtual_network.branches.*.location , 3)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  enable_ip_forwarding            = false
-  enable_accelerated_networking   = false
-  //network_security_group_id = "${azurerm_network_security_group.fgt_nsg.id}"
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = element(azurerm_subnet.Branch31SUbnets.*.id, 2)
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-resource "azurerm_virtual_machine" "branch31lnx" {
-  name                          = "branch31lnx"
-  location                      = element(azurerm_virtual_network.branches.*.location , 3)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  network_interface_ids = [azurerm_network_interface.branch31lnxnic.id]
-  vm_size               = var.lnx_vmsize
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "branch31lnx-OSDISK"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "branch31lnx"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.branch_lnx_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "Branch31"
-  }
-
-}
-
-
-///////////////////LNX Branch22
-
-resource "azurerm_network_interface" "branch22lnxnic" {
-  name                          = "${var.project}-${var.TAG}-Branch22-${var.branchesloc[4]}-lnx-port1"
-  location                      = element(azurerm_virtual_network.branches.*.location , 4)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  enable_ip_forwarding            = false
-  enable_accelerated_networking   = false
-  //network_security_group_id = "${azurerm_network_security_group.fgt_nsg.id}"
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = element(azurerm_subnet.Branch22SUbnets.*.id, 2)
-    private_ip_address_allocation = "Dynamic"
-  }
-}
-
-resource "azurerm_virtual_machine" "branch22lnx" {
-  name                          = "branch22lnx"
-  location                      = element(azurerm_virtual_network.branches.*.location , 4)
-  resource_group_name           = azurerm_resource_group.COATSBranchesRG.name
-
-  network_interface_ids = [azurerm_network_interface.branch22lnxnic.id]
-  vm_size               = var.lnx_vmsize
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "branch22lnx-OSDISK"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "branch22lnx"
-    admin_username = var.username
-    admin_password = var.password
-    custom_data    = data.template_file.branch_lnx_customdata.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-
-  tags = {
-    Project = "${var.project}"
-    Role = "Branch22"
-  }
-
+resource "azurerm_network_interface_security_group_association" "fgtbranch12mgmt" {
+  network_interface_id      = azurerm_network_interface.fgtbranch12nics.3.id
+  network_security_group_id = azurerm_network_security_group.branch1_fgt_nsg_hmgmt.id
 }
