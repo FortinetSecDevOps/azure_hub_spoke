@@ -1,14 +1,14 @@
 //############################ Create Spoke VNETs  ##################
 
 resource "azurerm_virtual_network" "Spokes" {
-  count               = length(var.spokesloc)
-  name                = "${var.project}-${var.TAG}-Spoke-${var.spokesloc[count.index]}"
-  location            = var.spokesloc[count.index]
+  count               = length(var.az_spokesloc)
+  name                = "${var.az_project}-${var.az_TAG}-Spoke-${var.az_spokesloc[count.index]}"
+  location            = var.az_spokesloc[count.index]
   resource_group_name = azurerm_resource_group.hubrg.name
-  address_space       = [var.spokescidr[count.index]]
+  address_space       = [var.az_spokescidr[count.index]]
 
   tags = {
-    Project = "${var.project}"
+    Project = "${var.az_project}"
     Role    = "SpokeVNET"
   }
 }
@@ -17,25 +17,25 @@ resource "azurerm_virtual_network" "Spokes" {
 ////////////Spoke11
 
 resource "azurerm_subnet" "Spoke11SUbnets" {
-  count                = length(var.spoke11subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Spoke-${var.spokesloc[0]}-subnet-${count.index + 1}"
+  count                = length(var.az_spoke11subnetscidrs)
+  name                 = "${var.az_project}-${var.az_TAG}-Spoke-${var.az_spokesloc[0]}-subnet-${count.index + 1}"
   resource_group_name  = azurerm_resource_group.hubrg.name
   virtual_network_name = element(azurerm_virtual_network.Spokes.*.name, 0)
-  address_prefixes     = [var.spoke11subnetscidrs[count.index]]
+  address_prefixes     = [var.az_spoke11subnetscidrs[count.index]]
 }
 
 resource "azurerm_route_table" "Spoke11privRTB" {
-  name                = "${var.project}-${var.TAG}-Spoke11_RTB"
-  location            = var.spokesloc[0]
+  name                = "${var.az_project}-${var.az_TAG}-Spoke11_RTB"
+  location            = var.az_spokesloc[0]
   resource_group_name = azurerm_resource_group.hubrg.name
   //disable_bgp_route_propagation = false
   tags = {
-    Project = "${var.project}"
+    Project = "${var.az_project}"
   }
 }
 
 resource "azurerm_subnet_route_table_association" "Spoke11privRTB_assoc" {
-  count          = length(var.spoke11subnetscidrs)
+  count          = length(var.az_spoke11subnetscidrs)
   subnet_id      = element(azurerm_subnet.Spoke11SUbnets.*.id, count.index)
   route_table_id = azurerm_route_table.Spoke11privRTB.id
 }
@@ -46,7 +46,7 @@ resource "azurerm_route" "Spoke11privRTB_to_br11" {
   route_table_name       = azurerm_route_table.Spoke11privRTB.name
   address_prefix         = "172.16.0.0/16"
   next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.ilbip[0]
+  next_hop_in_ip_address = var.az_ilbip[0]
 }
 resource "azurerm_route" "Spoke11privRTB_to_br12" {
   name                   = "branch12"
@@ -54,31 +54,31 @@ resource "azurerm_route" "Spoke11privRTB_to_br12" {
   route_table_name       = azurerm_route_table.Spoke11privRTB.name
   address_prefix         = "172.17.0.0/16"
   next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.ilbip[0]
+  next_hop_in_ip_address = var.az_ilbip[0]
 }
 
 ////////////Spoke12
 
 resource "azurerm_subnet" "Spoke12SUbnets" {
-  count                = length(var.spoke12subnetscidrs)
-  name                 = "${var.project}-${var.TAG}-Spoke-${var.spokesloc[1]}-subnet-${count.index + 1}"
+  count                = length(var.az_spoke12subnetscidrs)
+  name                 = "${var.az_project}-${var.az_TAG}-Spoke-${var.az_spokesloc[1]}-subnet-${count.index + 1}"
   resource_group_name  = azurerm_resource_group.hubrg.name
   virtual_network_name = element(azurerm_virtual_network.Spokes.*.name, 1)
-  address_prefixes     = [var.spoke12subnetscidrs[count.index]]
+  address_prefixes     = [var.az_spoke12subnetscidrs[count.index]]
 }
 
 resource "azurerm_route_table" "Spoke12privRTB" {
-  name                = "${var.project}-${var.TAG}-Spoke12_RTB"
-  location            = var.spokesloc[1]
+  name                = "${var.az_project}-${var.az_TAG}-Spoke12_RTB"
+  location            = var.az_spokesloc[1]
   resource_group_name = azurerm_resource_group.hubrg.name
   //disable_bgp_route_propagation = false
   tags = {
-    Project = "${var.project}"
+    Project = "${var.az_project}"
   }
 }
 
 resource "azurerm_subnet_route_table_association" "Spoke12privRTB_assoc" {
-  count          = length(var.spoke12subnetscidrs)
+  count          = length(var.az_spoke12subnetscidrs)
   subnet_id      = element(azurerm_subnet.Spoke12SUbnets.*.id, count.index)
   route_table_id = azurerm_route_table.Spoke12privRTB.id
 }
@@ -89,7 +89,7 @@ resource "azurerm_route" "Spoke12privRTB_to_br11" {
   route_table_name       = azurerm_route_table.Spoke12privRTB.name
   address_prefix         = "172.16.0.0/16"
   next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.ilbip[0]
+  next_hop_in_ip_address = var.az_ilbip[0]
 }
 resource "azurerm_route" "Spoke12privRTB_to_br12" {
   name                   = "branch12"
@@ -97,7 +97,7 @@ resource "azurerm_route" "Spoke12privRTB_to_br12" {
   route_table_name       = azurerm_route_table.Spoke12privRTB.name
   address_prefix         = "172.17.0.0/16"
   next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.ilbip[0]
+  next_hop_in_ip_address = var.az_ilbip[0]
 }
 
 //############################ Create Linux VMs inside Spokes ##################
@@ -113,7 +113,7 @@ data "template_file" "lnx_customdata" {
 ///////////////////LNX Spoke11
 
 resource "azurerm_network_interface" "spoke11lnxnic" {
-  name                = "${var.project}-${var.TAG}-Spoke11-${var.spokesloc[0]}-lnx-port1"
+  name                = "${var.az_project}-${var.az_TAG}-Spoke11-${var.az_spokesloc[0]}-lnx-port1"
   location            = element(azurerm_virtual_network.Spokes.*.location, 0)
   resource_group_name = azurerm_resource_group.hubrg.name
 
@@ -134,7 +134,7 @@ resource "azurerm_virtual_machine" "spoke11lnx" {
   resource_group_name = azurerm_resource_group.hubrg.name
 
   network_interface_ids = [azurerm_network_interface.spoke11lnxnic.id]
-  vm_size               = var.lnx_vmsize
+  vm_size               = var.az_lnx_vmsize
 
   storage_image_reference {
     publisher = "Canonical"
@@ -152,8 +152,8 @@ resource "azurerm_virtual_machine" "spoke11lnx" {
 
   os_profile {
     computer_name  = "spoke11lnx"
-    admin_username = var.username
-    admin_password = var.password
+    admin_username = var.az_username
+    admin_password = var.az_password
     custom_data    = data.template_file.lnx_customdata.rendered
   }
 
@@ -163,7 +163,7 @@ resource "azurerm_virtual_machine" "spoke11lnx" {
 
 
   tags = {
-    Project = "${var.project}"
+    Project = "${var.az_project}"
     Role    = "LNX11"
   }
 
@@ -172,7 +172,7 @@ resource "azurerm_virtual_machine" "spoke11lnx" {
 ///////////////////LNX Spoke12
 
 resource "azurerm_network_interface" "spoke12lnxnic" {
-  name                = "${var.project}-${var.TAG}-Spoke12-${var.spokesloc[1]}-lnx-port1"
+  name                = "${var.az_project}-${var.az_TAG}-Spoke12-${var.az_spokesloc[1]}-lnx-port1"
   location            = element(azurerm_virtual_network.Spokes.*.location, 1)
   resource_group_name = azurerm_resource_group.hubrg.name
 
@@ -193,7 +193,7 @@ resource "azurerm_virtual_machine" "spoke12lnx" {
   resource_group_name = azurerm_resource_group.hubrg.name
 
   network_interface_ids = [azurerm_network_interface.spoke12lnxnic.id]
-  vm_size               = var.lnx_vmsize
+  vm_size               = var.az_lnx_vmsize
 
   storage_image_reference {
     publisher = "Canonical"
@@ -211,8 +211,8 @@ resource "azurerm_virtual_machine" "spoke12lnx" {
 
   os_profile {
     computer_name  = "spoke12lnx"
-    admin_username = var.username
-    admin_password = var.password
+    admin_username = var.az_username
+    admin_password = var.az_password
     custom_data    = data.template_file.lnx_customdata.rendered
   }
 
@@ -222,7 +222,7 @@ resource "azurerm_virtual_machine" "spoke12lnx" {
 
 
   tags = {
-    Project = "${var.project}"
+    Project = "${var.az_project}"
     Role    = "LNX12"
   }
 
